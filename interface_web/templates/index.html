@@ -4,17 +4,31 @@
     <meta charset="UTF-8">
     <title>Bot Python Éducatif</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>💬 Bot Python Éducatif</h1>
-        <p>Écris ton code Python ci-dessous et envoie-le à ton bot Telegram 👇</p>
-        <form method="post">
-            <textarea name="code" rows="10" cols="50" placeholder="Ex : print('Hello Telegram!')"></textarea>
-            <button type="submit">🚀 Envoyer</button>
-        </form>
+        <h1><i class="fas fa-robot"></i> Bot Python Éducatif</h1>
+        
+        <div class="start-bot">
+            <a href="https://t.me/{{ bot_info.username }}" target="_blank" class="telegram-button">
+                <i class="fab fa-telegram"></i> Démarrer le bot sur Telegram
+            </a>
+        </div>
+
+        <div class="code-editor">
+            <h2><i class="fas fa-code"></i> Éditeur de code</h2>
+            <form method="post" action="/">
+                <textarea name="code" rows="10" placeholder="print('Hello, World!')" required></textarea>
+                <button type="submit"><i class="fas fa-paper-plane"></i> Exécuter le code</button>
+            </form>
+        </div>
+        
         {% if message %}
-            <div class="message">{{ message }}</div>
+            <div class="message {% if '❌' in message %}error{% endif %}">
+                <i class="{% if '❌' in message %}fas fa-exclamation-circle{% else %}fas fa-check-circle{% endif %}"></i> 
+                {{ message }}
+            </div>
         {% endif %}
     </div>
 </body>

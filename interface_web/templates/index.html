@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bot Python Éducatif</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>💬 Bot Python Éducatif</h1>
+        <p>Écris ton code Python ci-dessous et envoie-le à ton bot Telegram 👇</p>
+        <form method="post">
+            <textarea name="code" rows="10" cols="50" placeholder="Ex : print('Hello Telegram!')"></textarea>
+            <button type="submit">🚀 Envoyer</button>
+        </form>
+        {% if message %}
+            <div class="message">{{ message }}</div>
+        {% endif %}
+    </div>
+</body>
+</html>

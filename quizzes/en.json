@@ -1,0 +1,8 @@
+[
+    {
+      "question": "How do you print 'Hello' in Python?",
+      "options": ["echo 'Hello'", "print('Hello')", "console.log('Hello')"],
+      "answer": "print('Hello')"
+    }
+  ]
+  

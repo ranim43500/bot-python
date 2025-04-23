@@ -1,0 +1,8 @@
+[
+    {
+      "question": "Comment affiche-t-on 'Bonjour' en Python ?",
+      "options": ["echo 'Bonjour'", "print('Bonjour')", "console.log('Bonjour')"],
+      "answer": "print('Bonjour')"
+    }
+  ]
+  

@@ -10,13 +10,6 @@ Un bot Telegram multilingue qui offre des leçons Python, des quiz et un environ
 - 💻 Exécution de code Python en temps réel
 - 🖥️ Interface web élégante
 
-## 🚀 Installation
-
-1. Clonez le dépôt:
-   ```bash
-   git clone https://github.com/votre-nom/bot-python.git
-   cd bot-python
-   ```
 
 2. Installez les dépendances:
    ```bash

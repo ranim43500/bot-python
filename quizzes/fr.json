@@ -2,7 +2,68 @@
     {
       "question": "Comment affiche-t-on 'Bonjour' en Python ?",
       "options": ["echo 'Bonjour'", "print('Bonjour')", "console.log('Bonjour')"],
-      "answer": "print('Bonjour')"
+      "answer": "print('Bonjour')",
+      "explanation": "En Python, on utilise la fonction print() pour afficher du texte à l'écran."
+    },
+    {
+      "question": "Quelle est la bonne syntaxe pour définir une variable x avec la valeur 5 ?",
+      "options": ["x = 5", "let x = 5", "var x = 5", "x := 5"],
+      "answer": "x = 5",
+      "explanation": "En Python, on assigne une valeur à une variable avec le symbole égal (=)."
+    },
+    {
+      "question": "Comment créer une liste vide en Python ?",
+      "options": ["list()", "[]", "new List()", "{}"],
+      "answer": "[]",
+      "explanation": "Une liste vide en Python peut être créée avec des crochets vides []."
+    },
+    {
+      "question": "Quelle instruction permet de répéter du code pour chaque élément d'une liste ?",
+      "options": ["if", "for", "while", "loop"],
+      "answer": "for",
+      "explanation": "La boucle 'for' permet d'itérer sur chaque élément d'une séquence comme une liste."
+    },
+    {
+      "question": "Comment vérifier si une variable x est égale à 10 ?",
+      "options": ["x == 10", "x = 10", "x === 10", "x.equals(10)"],
+      "answer": "x == 10",
+      "explanation": "L'opérateur de comparaison en Python est le double égal (==)."
+    },
+    {
+      "question": "Quelle est l'extension standard des fichiers Python ?",
+      "options": [".py", ".python", ".pyt", ".p"],
+      "answer": ".py",
+      "explanation": "Les fichiers Python sont enregistrés avec l'extension .py."
+    },
+    {
+      "question": "Comment obtenir la longueur d'une liste 'ma_liste' ?",
+      "options": ["len(ma_liste)", "ma_liste.length", "ma_liste.size()", "count(ma_liste)"],
+      "answer": "len(ma_liste)",
+      "explanation": "La fonction len() permet d'obtenir le nombre d'éléments dans une séquence."
+    },
+    {
+      "question": "Comment convertir le nombre 42 en chaîne de caractères ?",
+      "options": ["str(42)", "42.toString()", "String(42)", "\"42\""],
+      "answer": "str(42)",
+      "explanation": "La fonction str() convertit d'autres types de données en chaînes de caractères."
+    },
+    {
+      "question": "Quel symbole est utilisé pour les commentaires en Python ?",
+      "options": ["//", "#", "/*", "<!--"],
+      "answer": "#",
+      "explanation": "Le symbole # est utilisé pour créer des commentaires sur une ligne en Python."
+    },
+    {
+      "question": "Comment importer un module nommé 'math' ?",
+      "options": ["import math", "include math", "require math", "using math"],
+      "answer": "import math",
+      "explanation": "L'instruction 'import' permet d'importer des modules en Python."
+    },
+    {
+      "question": "Quelle méthode permet d'ajouter un élément à la fin d'une liste ?",
+      "options": ["append()", "push()", "add()", "insert()"],
+      "answer": "append()",
+      "explanation": "La méthode append() ajoute un élément à la fin d'une liste en Python."
     }
   ]
   

@@ -50,6 +50,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Reset user data to avoid conflicts
     context.user_data.clear()
     
+    # Initialize quiz counters
+    context.user_data['correct_answers'] = 0
+    context.user_data['total_questions'] = 0
+    
     # Save user information
     user = update.effective_user
     user_id = str(user.id)
@@ -61,7 +65,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "last_name": user.last_name if user.last_name else "",
         "username": user.username if user.username else "",
         "lang": context.user_data.get('lang', 'en'),
-        "joined_date": time.strftime("%Y-%m-%d %H:%M:%S")
+        "joined_date": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "correct_answers": 0,
+        "total_questions": 0
     }
     save_users(users_db)
     
@@ -93,15 +99,44 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def user_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
+    lang = context.user_data.get('lang', 'en')
+    
     if user_id in users_db:
         user_data = users_db[user_id]
+        
+        # Récupérer les statistiques de quiz
+        correct_answers = user_data.get('correct_answers', 0)
+        total_questions = user_data.get('total_questions', 0)
+        
+        # Préparer le texte sur les statistiques
+        stats_text = ""
+        if total_questions > 0:
+            percentage = (correct_answers / total_questions) * 100
+            if lang == 'fr':
+                stats_text = f"\n📊 Quiz complétés: {total_questions}\n📈 Réponses correctes: {correct_answers} ({percentage:.1f}%)"
+            else:
+                stats_text = f"\n📊 Quizzes completed: {total_questions}\n📈 Correct answers: {correct_answers} ({percentage:.1f}%)"
+        
         await update.message.reply_text(
             f"🔑 ID: {user_data['id']}\n"
             f"👤 First name: {user_data['first_name']}\n"
             f"👤 Last name: {user_data['last_name']}\n"
             f"🌐 Language: {user_data['lang']}\n"
             f"📅 Joined: {user_data['joined_date']}"
+            f"{stats_text}"
         )
+        
+        # Ajouter le bouton de retour au menu
+        menu_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
+        keyboard = [[menu_text]]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        # Envoyer un message avec le bouton
+        await update.message.reply_text("ℹ️ " + (
+            "Utilisez le bouton ci-dessous pour revenir au menu principal." 
+            if lang == "fr" else 
+            "Use the button below to return to the main menu."
+        ), reply_markup=reply_markup)
     else:
         await update.message.reply_text("User information not found.")
     return MENU
@@ -110,10 +145,24 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_first_name = update.effective_user.first_name
     lang = context.user_data.get('lang', 'en')
     
+    # Récupérer les compteurs de quiz
+    correct_answers = context.user_data.get('correct_answers', 0)
+    total_questions = context.user_data.get('total_questions', 0)
+    
+    # Calculer le pourcentage si des questions ont été posées
+    score_text = ""
+    if total_questions > 0:
+        percentage = (correct_answers / total_questions) * 100
+        
+        if lang == 'fr':
+            score_text = f"\n📊 Score Quiz: {correct_answers}/{total_questions} ({percentage:.1f}%)"
+        else:
+            score_text = f"\n📊 Quiz Score: {correct_answers}/{total_questions} ({percentage:.1f}%)"
+    
     # Messages selon la langue
     menu_text = {
-        'fr': f"Bonjour {user_first_name}! Voici les options disponibles:",
-        'en': f"Hello {user_first_name}! Here are the available options:"
+        'fr': f"Bonjour {user_first_name}! Voici les options disponibles:{score_text}",
+        'en': f"Hello {user_first_name}! Here are the available options:{score_text}"
     }
     
     options_text = {
@@ -223,6 +272,42 @@ async def lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Affiche les leçons disponibles"""
     lang = context.user_data.get('lang', 'en')
     
+    # Journalisation pour le débogage
+    user_id = update.effective_user.id
+    logger.info(f"User {user_id} requested lessons in language: {lang}")
+    
+    # Vérifier si le répertoire des leçons existe
+    lesson_dir = f"lessons/{lang}"
+    if not os.path.exists(lesson_dir):
+        logger.error(f"Directory not found: {lesson_dir}")
+        error_msg = {
+            'fr': f"Répertoire de leçons introuvable: {lesson_dir}",
+            'en': f"Lesson directory not found: {lesson_dir}"
+        }
+        await update.message.reply_text(error_msg[lang])
+        # Créer le répertoire s'il n'existe pas
+        try:
+            os.makedirs(lesson_dir, exist_ok=True)
+            logger.info(f"Created directory: {lesson_dir}")
+        except Exception as e:
+            logger.error(f"Error creating directory {lesson_dir}: {e}")
+    
+    # Check which lesson files actually exist
+    available_lessons = []
+    try:
+        for i in range(1, 5):
+            fr_path = f"lessons/fr/lecon{i}.txt"
+            en_path = f"lessons/en/lesson{i}.txt"
+            
+            if lang == 'fr' and os.path.exists(fr_path):
+                available_lessons.append(i)
+            elif lang == 'en' and os.path.exists(en_path):
+                available_lessons.append(i)
+                
+        logger.info(f"Available lessons for {lang}: {available_lessons}")
+    except Exception as e:
+        logger.error(f"Error checking available lessons: {e}")
+    
     # Options de leçons
     lesson_text = {
         'fr': "Choisissez une leçon:",
@@ -246,7 +331,9 @@ async def lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Création du clavier avec les leçons disponibles
     keyboard = [[lesson] for lesson in lessons[lang]]
-    keyboard.append(["🔙 Retour au Menu"])
+    
+    # Assurer que le bouton de menu est présent
+    keyboard = add_menu_button(keyboard, lang)
     
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text(lesson_text[lang], reply_markup=reply_markup)
@@ -277,32 +364,43 @@ async def show_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await lesson(update, context)
     
     try:
-        # Charger le contenu de la leçon
-        lesson_path = f"lessons/{lang}/lesson{lesson_num}.txt"
+        # Déterminer le bon nom de fichier selon la langue
+        if lang == "fr":
+            # Format français: leconX.txt
+            lesson_path = f"lessons/{lang}/lecon{lesson_num}.txt"
+        else:
+            # Format anglais: lessonX.txt
+            lesson_path = f"lessons/{lang}/lesson{lesson_num}.txt"
+        
+        # Vérifier si le fichier existe
         if os.path.exists(lesson_path):
             lesson_content = open(lesson_path, encoding='utf-8').read()
         else:
-            # Si le fichier n'existe pas, message temporaire
-            back_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
-            
-            if lang == 'fr':
-                lesson_content = f"Leçon {lesson_num} en cours de développement.\nRevenez bientôt!"
+            # Essayer le format alternatif en cas d'échec
+            alternate_path = f"lessons/{lang}/{'lesson' if lang == 'fr' else 'lecon'}{lesson_num}.txt"
+            if os.path.exists(alternate_path):
+                lesson_content = open(alternate_path, encoding='utf-8').read()
             else:
-                lesson_content = f"Lesson {lesson_num} under development.\nCheck back soon!"
-            
-            # Ajouter bouton de retour
-            keyboard = [[back_text]]
-            reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-            await update.message.reply_text(lesson_content, reply_markup=reply_markup)
-            return LESSON_SELECTION
+                # Si aucun fichier n'existe, message temporaire
+                if lang == 'fr':
+                    lesson_content = f"Leçon {lesson_num} en cours de développement.\nRevenez bientôt!"
+                else:
+                    lesson_content = f"Lesson {lesson_num} under development.\nCheck back soon!"
+                
+                # Ajouter bouton de retour
+                keyboard = []
+                keyboard = add_menu_button(keyboard, lang)
+                reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+                await update.message.reply_text(lesson_content, reply_markup=reply_markup)
+                return LESSON_SELECTION
         
         # Diviser le contenu en plusieurs messages si nécessaire
         max_length = 4000  # Limite de taille des messages Telegram
         
         if len(lesson_content) <= max_length:
             # Ajouter bouton de retour
-            back_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
-            keyboard = [[back_text]]
+            keyboard = []
+            keyboard = add_menu_button(keyboard, lang)
             reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
             
             await update.message.reply_text(lesson_content, reply_markup=reply_markup)
@@ -313,8 +411,8 @@ async def show_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             for i, chunk in enumerate(chunks):
                 if i == len(chunks) - 1:  # Dernier message
-                    back_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
-                    keyboard = [[back_text]]
+                    keyboard = []
+                    keyboard = add_menu_button(keyboard, lang)
                     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
                     await update.message.reply_text(chunk, reply_markup=reply_markup)
                 else:
@@ -325,10 +423,10 @@ async def show_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error showing lesson: {e}")
         
-        # Message d'erreur selon la langue
+        # Message d'erreur selon la langue avec plus de détails
         error_msg = {
-            'fr': f"Erreur lors du chargement de la leçon: {str(e)}",
-            'en': f"Error loading lesson: {str(e)}"
+            'fr': f"Erreur lors du chargement de la leçon: {str(e)}\nChemin tenté: lessons/{lang}/lecon{lesson_num}.txt ou lessons/{lang}/lesson{lesson_num}.txt",
+            'en': f"Error loading lesson: {str(e)}\nPath attempted: lessons/{lang}/lesson{lesson_num}.txt or lessons/{lang}/lecon{lesson_num}.txt"
         }
         
         await update.message.reply_text(error_msg[lang])
@@ -361,9 +459,8 @@ async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
         options = quiz_item['options']
         keyboard = [[option] for option in options]
         
-        # Ajouter option de retour
-        back_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
-        keyboard.append([back_text])
+        # Assurer que le bouton de menu est présent
+        keyboard = add_menu_button(keyboard, lang)
         
         reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
         
@@ -401,11 +498,30 @@ async def check_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
     correct_answer = context.user_data.get('quiz_answer', '')
     explanation = context.user_data.get('quiz_explanation', '')
     
+    # Incrémenter le compteur total de questions
+    total_questions = context.user_data.get('total_questions', 0) + 1
+    context.user_data['total_questions'] = total_questions
+    
+    # Mettre à jour la base de données utilisateur
+    user_id = str(update.effective_user.id)
+    if user_id in users_db:
+        users_db[user_id]['total_questions'] = total_questions
+        save_users(users_db)
+    
     if text == correct_answer:
+        # Incrémenter le compteur de bonnes réponses
+        correct_answers = context.user_data.get('correct_answers', 0) + 1
+        context.user_data['correct_answers'] = correct_answers
+        
+        # Mettre à jour la base de données utilisateur
+        if user_id in users_db:
+            users_db[user_id]['correct_answers'] = correct_answers
+            save_users(users_db)
+        
         # Messages selon la langue
         success_msg = {
-            'fr': "✅ Bonne réponse !",
-            'en': "✅ Correct answer!"
+            'fr': f"✅ Bonne réponse ! ({correct_answers}/{total_questions})",
+            'en': f"✅ Correct answer! ({correct_answers}/{total_questions})"
         }
         
         # Ajouter l'explication si disponible
@@ -419,9 +535,10 @@ async def check_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Options après la réponse
         next_quiz_text = "❓ Autre Quiz" if lang == "fr" else "❓ Another Quiz"
-        menu_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
         
-        keyboard = [[next_quiz_text], [menu_text]]
+        keyboard = [[next_quiz_text]]
+        keyboard = add_menu_button(keyboard, lang)
+        
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
         await update.message.reply_text(response, reply_markup=reply_markup)
@@ -430,8 +547,8 @@ async def check_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         # Messages selon la langue
         failure_msg = {
-            'fr': f"❌ Mauvaise réponse. La bonne réponse était: {correct_answer}",
-            'en': f"❌ Wrong answer. The correct answer was: {correct_answer}"
+            'fr': f"❌ Mauvaise réponse. La bonne réponse était: {correct_answer} ({context.user_data.get('correct_answers', 0)}/{total_questions})",
+            'en': f"❌ Wrong answer. The correct answer was: {correct_answer} ({context.user_data.get('correct_answers', 0)}/{total_questions})"
         }
         
         # Ajouter l'explication si disponible
@@ -445,9 +562,10 @@ async def check_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Options après la réponse
         next_quiz_text = "❓ Autre Quiz" if lang == "fr" else "❓ Another Quiz"
-        menu_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
         
-        keyboard = [[next_quiz_text], [menu_text]]
+        keyboard = [[next_quiz_text]]
+        keyboard = add_menu_button(keyboard, lang)
+        
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
         await update.message.reply_text(response, reply_markup=reply_markup)
@@ -472,8 +590,8 @@ async def code(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
     
     # Option de retour
-    back_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
-    keyboard = [[back_text]]
+    keyboard = []
+    keyboard = add_menu_button(keyboard, lang)
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     
     await update.message.reply_text(code_text[lang], reply_markup=reply_markup)
@@ -498,9 +616,10 @@ async def execute_user_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Option après l'exécution
         run_again_text = "🔄 Exécuter autre code" if lang == "fr" else "🔄 Run more code"
-        menu_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
         
-        keyboard = [[run_again_text], [menu_text]]
+        keyboard = [[run_again_text]]
+        keyboard = add_menu_button(keyboard, lang)
+        
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
         await update.message.reply_text(f"{result_text[lang]}\n\n```\n{output}\n```", reply_markup=reply_markup)
@@ -517,9 +636,10 @@ async def execute_user_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Option après l'erreur
         run_again_text = "🔄 Réessayer" if lang == "fr" else "🔄 Try again"
-        menu_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
         
-        keyboard = [[run_again_text], [menu_text]]
+        keyboard = [[run_again_text]]
+        keyboard = add_menu_button(keyboard, lang)
+        
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
         await update.message.reply_text(error_msg[lang], reply_markup=reply_markup)
@@ -551,6 +671,25 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(cancel_text[lang])
     return ConversationHandler.END
+
+# Fonction utilitaire pour ajouter le bouton de menu
+def add_menu_button(keyboard, lang):
+    """Ajoute un bouton de retour au menu à un clavier existant"""
+    back_text = "🔙 Retour au Menu" if lang == "fr" else "🔙 Back to Menu"
+    
+    # Si le clavier est vide, créer un nouveau avec juste le bouton de menu
+    if not keyboard:
+        return [[back_text]]
+    
+    # Vérifier si le bouton existe déjà
+    for row in keyboard:
+        for button in row:
+            if "Retour au Menu" in button or "Back to Menu" in button:
+                return keyboard
+    
+    # Ajouter le bouton s'il n'existe pas
+    keyboard.append([back_text])
+    return keyboard
 
 async def add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Only admins should be able to use this command
@@ -664,7 +803,57 @@ async def web_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Aucun code Python à exécuter")
     return MENU
 
+# Ajoutez une fonction pour créer les leçons manquantes si nécessaire
+def create_missing_lessons():
+    """Crée les leçons manquantes avec des contenus par défaut"""
+    logger.info("Checking and creating missing lesson files...")
+    
+    # Contenu par défaut pour les leçons en français
+    fr_lesson_content = {
+        1: "Bienvenue dans la leçon 1 : Les bases de Python.\nUn programme Python commence par des instructions simples :\nprint(\"Bonjour, monde !\")\n",
+        2: "Leçon 2 : Variables et Types en Python.\nEn Python, vous pouvez stocker des données dans des variables :\nx = 5\nnom = \"Python\"\n",
+        3: "Leçon 3 : Les conditions en Python.\nLes structures conditionnelles permettent de prendre des décisions :\nif x > 0:\n    print(\"Positif\")\nelse:\n    print(\"Négatif ou zéro\")\n",
+        4: "Leçon 4 : Les boucles en Python.\nLes boucles permettent de répéter des instructions :\nfor i in range(5):\n    print(i)\n"
+    }
+    
+    # Contenu par défaut pour les leçons en anglais
+    en_lesson_content = {
+        1: "Welcome to Lesson 1: Python Basics.\nA Python program starts with simple statements:\nprint(\"Hello, world!\")\n",
+        2: "Lesson 2: Variables and Types in Python.\nIn Python, you can store data in variables:\nx = 5\nname = \"Python\"\n",
+        3: "Lesson 3: Conditions in Python.\nConditional structures allow you to make decisions:\nif x > 0:\n    print(\"Positive\")\nelse:\n    print(\"Negative or zero\")\n",
+        4: "Lesson 4: Loops in Python.\nLoops allow you to repeat instructions:\nfor i in range(5):\n    print(i)\n"
+    }
+    
+    # Créer les répertoires s'ils n'existent pas
+    os.makedirs("lessons/fr", exist_ok=True)
+    os.makedirs("lessons/en", exist_ok=True)
+    
+    # Créer les leçons en français manquantes
+    for i in range(1, 5):
+        fr_path = f"lessons/fr/lecon{i}.txt"
+        if not os.path.exists(fr_path):
+            try:
+                with open(fr_path, 'w', encoding='utf-8') as f:
+                    f.write(fr_lesson_content[i])
+                logger.info(f"Created French lesson file: {fr_path}")
+            except Exception as e:
+                logger.error(f"Error creating {fr_path}: {e}")
+    
+    # Créer les leçons en anglais manquantes
+    for i in range(1, 5):
+        en_path = f"lessons/en/lesson{i}.txt"
+        if not os.path.exists(en_path):
+            try:
+                with open(en_path, 'w', encoding='utf-8') as f:
+                    f.write(en_lesson_content[i])
+                logger.info(f"Created English lesson file: {en_path}")
+            except Exception as e:
+                logger.error(f"Error creating {en_path}: {e}")
+
 def main():
+    # Create missing lessons if necessary
+    create_missing_lessons()
+    
     # Create the Application
     token = "7426449390:AAFvKcfiKArCsnd9_KpY6sETzK1VL4IJHtA"  
     application = Application.builder().token(token).build()
@@ -678,6 +867,11 @@ def main():
     LESSON_SELECTION = 4
     QUIZ_RESULT = 5
     CODE_RESULT = 6
+    
+    # Log bot startup info
+    logger.info(f"Bot started with token: {token[:5]}...{token[-5:]}")
+    logger.info(f"Current directory: {os.getcwd()}")
+    logger.info(f"Lessons directory exists: {os.path.exists('lessons')}")
     
     # Add conversation handler
     conv_handler = ConversationHandler(

@@ -1,0 +1,6 @@
+Lesson 3: Conditions in Python.
+Conditional structures allow you to make decisions:
+if x > 0:
+    print("Positive")
+else:
+    print("Negative or zero")

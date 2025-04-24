@@ -1,0 +1,4 @@
+Lesson 4: Loops in Python.
+Loops allow you to repeat instructions:
+for i in range(5):
+    print(i)

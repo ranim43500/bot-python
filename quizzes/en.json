@@ -2,7 +2,68 @@
     {
       "question": "How do you print 'Hello' in Python?",
       "options": ["echo 'Hello'", "print('Hello')", "console.log('Hello')"],
-      "answer": "print('Hello')"
+      "answer": "print('Hello')",
+      "explanation": "In Python, we use the print() function to display text on the screen."
+    },
+    {
+      "question": "What is the correct syntax to assign value 5 to variable x?",
+      "options": ["x = 5", "let x = 5", "var x = 5", "x := 5"],
+      "answer": "x = 5",
+      "explanation": "In Python, we assign a value to a variable using the equal sign (=)."
+    },
+    {
+      "question": "How do you create an empty list in Python?",
+      "options": ["list()", "[]", "new List()", "{}"],
+      "answer": "[]",
+      "explanation": "An empty list in Python can be created using empty square brackets []."
+    },
+    {
+      "question": "Which statement is used to repeat code for each item in a list?",
+      "options": ["if", "for", "while", "loop"],
+      "answer": "for",
+      "explanation": "The 'for' loop is used to iterate over each element in a sequence like a list."
+    },
+    {
+      "question": "How do you check if variable x equals 10?",
+      "options": ["x == 10", "x = 10", "x === 10", "x.equals(10)"],
+      "answer": "x == 10",
+      "explanation": "The comparison operator in Python is the double equal sign (==)."
+    },
+    {
+      "question": "What is the standard file extension for Python files?",
+      "options": [".py", ".python", ".pyt", ".p"],
+      "answer": ".py",
+      "explanation": "Python files are saved with the .py extension."
+    },
+    {
+      "question": "How do you get the length of a list named 'my_list'?",
+      "options": ["len(my_list)", "my_list.length", "my_list.size()", "count(my_list)"],
+      "answer": "len(my_list)",
+      "explanation": "The len() function returns the number of items in a sequence."
+    },
+    {
+      "question": "How do you convert the number 42 to a string?",
+      "options": ["str(42)", "42.toString()", "String(42)", "\"42\""],
+      "answer": "str(42)",
+      "explanation": "The str() function converts other data types to strings."
+    },
+    {
+      "question": "Which symbol is used for comments in Python?",
+      "options": ["//", "#", "/*", "<!--"],
+      "answer": "#",
+      "explanation": "The # symbol is used to create single-line comments in Python."
+    },
+    {
+      "question": "How do you import a module named 'math'?",
+      "options": ["import math", "include math", "require math", "using math"],
+      "answer": "import math",
+      "explanation": "The 'import' statement is used to import modules in Python."
+    },
+    {
+      "question": "Which method adds an item to the end of a list?",
+      "options": ["append()", "push()", "add()", "insert()"],
+      "answer": "append()",
+      "explanation": "The append() method adds an item to the end of a list in Python."
     }
   ]
   

@@ -1,0 +1,4 @@
+Leçon 4 : Les boucles en Python.
+Les boucles permettent de répéter des instructions :
+for i in range(5):
+    print(i)

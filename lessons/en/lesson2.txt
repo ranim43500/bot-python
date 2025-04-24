@@ -1,0 +1,4 @@
+Lesson 2: Variables and Types in Python.
+In Python, you can store data in variables:
+x = 5
+name = "Python"
